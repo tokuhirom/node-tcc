@@ -1,2 +1,4 @@
 C-TCC-0.05/
 C-TCC-0.05.tar.gz
+build/
+node_modules/
