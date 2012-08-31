@@ -42,6 +42,9 @@ public:
     NodeTCC() {
         tcc_ = tcc_new();
     }
+    ~NodeTCC() {
+        delete tcc_;
+    }
     static Handle<Value> New(const Arguments& args) {
         HandleScope scope;
 
