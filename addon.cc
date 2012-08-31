@@ -67,6 +67,7 @@ public:
                 for (int j=0; j<i; ++j) {
                     free(argv[j]);
                 }
+                delete [] argv;
                 return ThrowException(Exception::Error(String::New("Cannot allocate memory.")));
             }
             argv[i] = cbuf;
