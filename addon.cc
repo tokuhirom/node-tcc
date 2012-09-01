@@ -1,5 +1,6 @@
 #define BUILDING_NODE_EXTENSION
 #include <node.h>
+#include <node_buffer.h>
 #include <v8.h>
 #include <stdlib.h>
 #include <string>
@@ -8,30 +9,54 @@
 #include <libtcc.h>
 
 #define REQ_EXT_ARG(I, VAR) \
-if (args.Length() <= (I) || !args[I]->IsExternal()) \
-return ThrowException(Exception::TypeError( \
-String::New("Argument " #I " must be an external"))); \
-Local<External> VAR = Local<External>::Cast(args[I]);
+    if (args.Length() <= (I) || !args[I]->IsExternal()) \
+        return ThrowException(Exception::TypeError( \
+            String::New("Argument " #I " must be an external"))); \
+    Local<External> VAR = Local<External>::Cast(args[I]);
 #define REQ_STR_ARG(I, VAR) \
-if (args.Length() <= (I) || !args[I]->IsString()) \
-return ThrowException(Exception::TypeError( \
-String::New("Argument " #I " must be a string"))); \
-String::Utf8Value VAR(args[I]->ToString());
+    if (args.Length() <= (I) || !args[I]->IsString()) \
+        return ThrowException(Exception::TypeError( \
+            String::New("Argument " #I " must be a string"))); \
+    String::Utf8Value VAR(args[I]->ToString());
 #define REQ_OBJ_ARG(I, VAR) \
-if (args.Length() <= (I) || !args[I]->IsObject()) \
-return ThrowException(Exception::TypeError( \
-String::New("Argument " #I " must be a object"))); \
-Local<Object> VAR = Local<Object>::Cast(args[I]);
+    if (args.Length() <= (I) || !args[I]->IsObject()) \
+        return ThrowException(Exception::TypeError( \
+            String::New("Argument " #I " must be a object"))); \
+    Local<Object> VAR = Local<Object>::Cast(args[I]);
 #define REQ_INT_ARG(I, VAR) \
-if (args.Length() <= (I) || !args[I]->IsInt32()) \
-return ThrowException(Exception::TypeError( \
-String::New("Argument " #I " must be an integer"))); \
-int32_t VAR = args[I]->Int32Value();
+    if (args.Length() <= (I) || !args[I]->IsInt32()) \
+        return ThrowException(Exception::TypeError( \
+            String::New("Argument " #I " must be an integer"))); \
+    int32_t VAR = args[I]->Int32Value();
+#define REQ_BUF_ARG(I, VAR) \
+    if (args.Length() <= (I) || !Buffer::HasInstance(args[I])) \
+        return ThrowException(Exception::TypeError( \
+            String::New("Argument " #I " must be an Buffer"))); \
+    void * VAR = Buffer::Data(args[I]->ToObject());
+
+
+#define SET_ENUM_VALUE(_value) t->Set(String::NewSymbol(#_value), Integer::New(_value), static_cast<PropertyAttribute>(ReadOnly|DontDelete))
 
 #define STATE (Unwrap<NodeTCC>(args.This())->tcc_)
 
 using namespace v8;
 using namespace node;
+
+void wrap_pointer_cb(char *data, void *hint) {
+    //fprintf(stderr, "wrap_pointer_cb\n");
+}
+
+Handle<Value> WrapPointer(char *ptr, size_t length) {
+    void *user_data = NULL;
+    Buffer *buf = Buffer::New(ptr, length, wrap_pointer_cb, user_data);
+    return buf->handle_;
+}
+
+Handle<Value> WrapPointer(void *ptr) {
+    size_t size = 0;
+    return WrapPointer(static_cast<char*>(ptr), size);
+}
+
 
 class NodeTCC : ObjectWrap {
 public:
@@ -54,6 +79,14 @@ public:
         NODE_SET_PROTOTYPE_METHOD(t, "getSymbol", NodeTCC::get_symbol);
         NODE_SET_PROTOTYPE_METHOD(t, "relocate", NodeTCC::relocate);
         NODE_SET_PROTOTYPE_METHOD(t, "addSymbol", NodeTCC::add_symbol);
+        SET_ENUM_VALUE(TCC_OUTPUT_MEMORY);
+        SET_ENUM_VALUE(TCC_OUTPUT_EXE);
+        SET_ENUM_VALUE(TCC_OUTPUT_DLL);
+        SET_ENUM_VALUE(TCC_OUTPUT_OBJ);
+        SET_ENUM_VALUE(TCC_OUTPUT_PREPROCESS);
+        SET_ENUM_VALUE(TCC_OUTPUT_FORMAT_ELF);
+        SET_ENUM_VALUE(TCC_OUTPUT_FORMAT_BINARY);
+        SET_ENUM_VALUE(TCC_OUTPUT_FORMAT_COFF);
         t->InstanceTemplate()->SetInternalFieldCount(1);
         target->Set(String::New("TCC"), t->GetFunction());
     }
@@ -157,7 +190,8 @@ public:
     static Handle<Value> get_symbol(const Arguments& args) {
         HandleScope scope;
         REQ_STR_ARG(0, sym);
-        return scope.Close(External::New(tcc_get_symbol(STATE, *sym)));
+        void * ptr = tcc_get_symbol(STATE, *sym);
+        return scope.Close(WrapPointer(ptr));
     }
     static Handle<Value> relocate(const Arguments& args) {
         HandleScope scope;
@@ -166,8 +200,8 @@ public:
     static Handle<Value> add_symbol(const Arguments& args) {
         HandleScope scope;
         REQ_STR_ARG(0, name);
-        REQ_EXT_ARG(1, ptr);
-        return scope.Close(Integer::New(tcc_add_symbol(STATE, *name, *ptr)));
+        REQ_BUF_ARG(1, ptr);
+        return scope.Close(Integer::New(tcc_add_symbol(STATE, *name, ptr)));
     }
 };
 

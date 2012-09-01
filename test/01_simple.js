@@ -6,5 +6,6 @@ test(function (t) {
     tcc.compileString('int main() { return 4649; }');
     var ret = tcc.run();
     t.equals(ret, 4649);
+    t.equals(TCC.TCC_OUTPUT_MEMORY, 0, 'TCC_OUTPUT_MEMORY');
     t.end();
 });
