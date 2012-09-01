@@ -12,12 +12,14 @@ SYNOPSIS
     var ret = tcc.run();
     # => 4649
 
-TODO
-----
+INSTALATION
+-----------
 
-Following methods are not supported yet.
+node-tcc requires libtcc, compiled with -fPIC. If you OS' libtcc does not compiled with -fPIC, you need to to compile by yourself.
 
-    // TODO add_symbol
+And so, you need to run a conifgure script with following style.
+
+  ./configure --extra-cflags="-fPIC"
 
 FUTURE PLAN
 ------------
