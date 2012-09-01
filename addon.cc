@@ -39,8 +39,21 @@ public:
 
     static void Init(Handle<Object> target) {
         Local<FunctionTemplate> t = FunctionTemplate::New(NodeTCC::New);
-        NODE_SET_PROTOTYPE_METHOD(t, "compile_string", NodeTCC::compile_string);
+        NODE_SET_PROTOTYPE_METHOD(t, "addFile", NodeTCC::add_file);
+        NODE_SET_PROTOTYPE_METHOD(t, "addIncludePath", NodeTCC::add_include_path);
+        NODE_SET_PROTOTYPE_METHOD(t, "addLibrary", NodeTCC::add_library);
+        NODE_SET_PROTOTYPE_METHOD(t, "addLibraryPath", NodeTCC::add_library_path);
+        NODE_SET_PROTOTYPE_METHOD(t, "addSysincludePath", NodeTCC::add_sysinclude_path);
+        NODE_SET_PROTOTYPE_METHOD(t, "compileString", NodeTCC::compile_string);
+        NODE_SET_PROTOTYPE_METHOD(t, "defineSymbol", NodeTCC::define_symbol);
+        NODE_SET_PROTOTYPE_METHOD(t, "outputFile", NodeTCC::output_file);
         NODE_SET_PROTOTYPE_METHOD(t, "run", NodeTCC::run);
+        NODE_SET_PROTOTYPE_METHOD(t, "setOutputType", NodeTCC::set_output_type);
+        NODE_SET_PROTOTYPE_METHOD(t, "setWarning", NodeTCC::set_warning);
+        NODE_SET_PROTOTYPE_METHOD(t, "undefineSymbol", NodeTCC::undefine_symbol);
+        NODE_SET_PROTOTYPE_METHOD(t, "getSymbol", NodeTCC::get_symbol);
+        NODE_SET_PROTOTYPE_METHOD(t, "relocate", NodeTCC::relocate);
+        NODE_SET_PROTOTYPE_METHOD(t, "addSymbol", NodeTCC::add_symbol);
         t->InstanceTemplate()->SetInternalFieldCount(1);
         target->Set(String::New("TCC"), t->GetFunction());
     }

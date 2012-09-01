@@ -3,7 +3,7 @@ var TCC = require('../index.js'),
 
 test(function (t) {
     var tcc = new TCC();
-    tcc.compile_string('int main() { return 4649; }');
+    tcc.compileString('int main() { return 4649; }');
     var ret = tcc.run();
     t.equals(ret, 4649);
     t.end();
