@@ -1,6 +1,6 @@
 {
   "name": "tcc",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "TCC(Tiny C Compiler) bindings for node.js",
   "main": "index.js",
   "directories": {
