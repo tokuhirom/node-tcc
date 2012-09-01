@@ -22,6 +22,11 @@ if (args.Length() <= (I) || !args[I]->IsObject()) \
 return ThrowException(Exception::TypeError( \
 String::New("Argument " #I " must be a object"))); \
 Local<Object> VAR = Local<Object>::Cast(args[I]);
+#define REQ_INT_ARG(I, VAR) \
+if (args.Length() <= (I) || !args[I]->IsInt32()) \
+return ThrowException(Exception::TypeError( \
+String::New("Argument " #I " must be an integer"))); \
+int32_t VAR = args[I]->Int32Value();
 
 #define STATE (Unwrap<NodeTCC>(args.This())->tcc_)
 
@@ -43,7 +48,7 @@ public:
         tcc_ = tcc_new();
     }
     ~NodeTCC() {
-        delete tcc_;
+        tcc_delete(tcc_);
     }
     static Handle<Value> New(const Arguments& args) {
         HandleScope scope;
@@ -54,10 +59,47 @@ public:
         return scope.Close(args.Holder());
     }
 
+    static Handle<Value> add_file(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, fname);
+        return scope.Close(Integer::New(tcc_add_file(STATE, *fname)));
+    }
+    static Handle<Value> add_include_path(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, path);
+        return scope.Close(Integer::New(tcc_add_include_path(STATE, *path)));
+    }
+    static Handle<Value> add_library(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, lib);
+        return scope.Close(Integer::New(tcc_add_library(STATE, *lib)));
+    }
+    static Handle<Value> add_library_path(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, libpath);
+        return scope.Close(Integer::New(tcc_add_library_path(STATE, *libpath)));
+    }
+    static Handle<Value> add_sysinclude_path(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, path);
+        return scope.Close(Integer::New(tcc_add_sysinclude_path(STATE, *path)));
+    }
     static Handle<Value> compile_string(const Arguments& args) {
         HandleScope scope;
         REQ_STR_ARG(0, src);
         return scope.Close(Integer::New(tcc_compile_string(STATE, *src)));
+    }
+    static Handle<Value> define_symbol(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, sym);
+        REQ_STR_ARG(1, val);
+        tcc_define_symbol(STATE, *sym, *val);
+        return scope.Close(Undefined());
+    }
+    static Handle<Value> output_file(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, filename);
+        return scope.Close(Integer::New(tcc_output_file(STATE, *filename)));
     }
     static Handle<Value> run(const Arguments& args) {
         HandleScope scope;
@@ -81,6 +123,38 @@ public:
         }
         delete [] argv;
         return scope.Close(Integer::New(retval));
+    }
+    static Handle<Value> set_output_type(const Arguments& args) {
+        HandleScope scope;
+        REQ_INT_ARG(0, type);
+        return scope.Close(Integer::New(tcc_set_output_type(STATE, type)));
+    }
+    static Handle<Value> set_warning(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, name);
+        REQ_INT_ARG(1, val);
+        return scope.Close(Integer::New(tcc_set_warning(STATE, *name, val)));
+    }
+    static Handle<Value> undefine_symbol(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, sym);
+        tcc_undefine_symbol(STATE, *sym);
+        return scope.Close(Undefined());
+    }
+    static Handle<Value> get_symbol(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, sym);
+        return scope.Close(External::New(tcc_get_symbol(STATE, *sym)));
+    }
+    static Handle<Value> relocate(const Arguments& args) {
+        HandleScope scope;
+        return scope.Close(Integer::New(tcc_relocate(STATE)));
+    }
+    static Handle<Value> add_symbol(const Arguments& args) {
+        HandleScope scope;
+        REQ_STR_ARG(0, name);
+        REQ_EXT_ARG(1, ptr);
+        return scope.Close(Integer::New(tcc_add_symbol(STATE, *name, *ptr)));
     }
 };
 
