@@ -11,17 +11,17 @@
 using namespace v8;
 using namespace node;
 
-void wrap_pointer_cb(char *data, void *hint) {
+static void wrap_pointer_cb(char *data, void *hint) {
     //fprintf(stderr, "wrap_pointer_cb\n");
 }
 
-Handle<Value> WrapPointer(char *ptr, size_t length) {
+static Handle<Value> WrapPointer(char *ptr, size_t length) {
     void *user_data = NULL;
     Buffer *buf = Buffer::New(ptr, length, wrap_pointer_cb, user_data);
     return buf->handle_;
 }
 
-Handle<Value> WrapPointer(void *ptr) {
+static Handle<Value> WrapPointer(void *ptr) {
     size_t size = 0;
     return WrapPointer(static_cast<char*>(ptr), size);
 }
