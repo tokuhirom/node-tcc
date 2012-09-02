@@ -9,3 +9,12 @@ test(function (t) {
     t.equals(TCC.TCC_OUTPUT_MEMORY, 0, 'TCC_OUTPUT_MEMORY');
     t.end();
 });
+
+test(function (t) {
+    var tcc = new TCC();
+    tcc.compileString(new String('int main() { return 4649; }'));
+    var ret = tcc.run();
+    t.equals(ret, 4649);
+    t.equals(TCC.TCC_OUTPUT_MEMORY, 0, 'TCC_OUTPUT_MEMORY');
+    t.end();
+});

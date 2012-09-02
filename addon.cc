@@ -1,41 +1,10 @@
-#define BUILDING_NODE_EXTENSION
-#include <node.h>
-#include <node_buffer.h>
-#include <v8.h>
 #include <stdlib.h>
 #include <string>
 #include <stdlib.h>
 #include <stdio.h>
 #include <libtcc.h>
 
-#define REQ_EXT_ARG(I, VAR) \
-    if (args.Length() <= (I) || !args[I]->IsExternal()) \
-        return ThrowException(Exception::TypeError( \
-            String::New("Argument " #I " must be an external"))); \
-    Local<External> VAR = Local<External>::Cast(args[I]);
-#define REQ_STR_ARG(I, VAR) \
-    if (args.Length() <= (I) || !args[I]->IsString()) \
-        return ThrowException(Exception::TypeError( \
-            String::New("Argument " #I " must be a string"))); \
-    String::Utf8Value VAR(args[I]->ToString());
-#define REQ_OBJ_ARG(I, VAR) \
-    if (args.Length() <= (I) || !args[I]->IsObject()) \
-        return ThrowException(Exception::TypeError( \
-            String::New("Argument " #I " must be a object"))); \
-    Local<Object> VAR = Local<Object>::Cast(args[I]);
-#define REQ_INT_ARG(I, VAR) \
-    if (args.Length() <= (I) || !args[I]->IsInt32()) \
-        return ThrowException(Exception::TypeError( \
-            String::New("Argument " #I " must be an integer"))); \
-    int32_t VAR = args[I]->Int32Value();
-#define REQ_BUF_ARG(I, VAR) \
-    if (args.Length() <= (I) || !Buffer::HasInstance(args[I])) \
-        return ThrowException(Exception::TypeError( \
-            String::New("Argument " #I " must be an Buffer"))); \
-    void * VAR = Buffer::Data(args[I]->ToObject());
-
-
-#define SET_ENUM_VALUE(_value) t->Set(String::NewSymbol(#_value), Integer::New(_value), static_cast<PropertyAttribute>(ReadOnly|DontDelete))
+#include "nodeutil.h"
 
 #define STATE (Unwrap<NodeTCC>(args.This())->tcc_)
 
@@ -79,14 +48,14 @@ public:
         NODE_SET_PROTOTYPE_METHOD(t, "getSymbol", NodeTCC::get_symbol);
         NODE_SET_PROTOTYPE_METHOD(t, "relocate", NodeTCC::relocate);
         NODE_SET_PROTOTYPE_METHOD(t, "addSymbol", NodeTCC::add_symbol);
-        SET_ENUM_VALUE(TCC_OUTPUT_MEMORY);
-        SET_ENUM_VALUE(TCC_OUTPUT_EXE);
-        SET_ENUM_VALUE(TCC_OUTPUT_DLL);
-        SET_ENUM_VALUE(TCC_OUTPUT_OBJ);
-        SET_ENUM_VALUE(TCC_OUTPUT_PREPROCESS);
-        SET_ENUM_VALUE(TCC_OUTPUT_FORMAT_ELF);
-        SET_ENUM_VALUE(TCC_OUTPUT_FORMAT_BINARY);
-        SET_ENUM_VALUE(TCC_OUTPUT_FORMAT_COFF);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_MEMORY);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_EXE);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_DLL);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_OBJ);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_PREPROCESS);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_FORMAT_ELF);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_FORMAT_BINARY);
+        SET_ENUM_VALUE(t, TCC_OUTPUT_FORMAT_COFF);
         t->InstanceTemplate()->SetInternalFieldCount(1);
         target->Set(String::New("TCC"), t->GetFunction());
     }
@@ -107,44 +76,44 @@ public:
 
     static Handle<Value> add_file(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, fname);
+        ARG_STR(0, fname);
         return scope.Close(Integer::New(tcc_add_file(STATE, *fname)));
     }
     static Handle<Value> add_include_path(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, path);
+        ARG_STR(0, path);
         return scope.Close(Integer::New(tcc_add_include_path(STATE, *path)));
     }
     static Handle<Value> add_library(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, lib);
+        ARG_STR(0, lib);
         return scope.Close(Integer::New(tcc_add_library(STATE, *lib)));
     }
     static Handle<Value> add_library_path(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, libpath);
+        ARG_STR(0, libpath);
         return scope.Close(Integer::New(tcc_add_library_path(STATE, *libpath)));
     }
     static Handle<Value> add_sysinclude_path(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, path);
+        ARG_STR(0, path);
         return scope.Close(Integer::New(tcc_add_sysinclude_path(STATE, *path)));
     }
     static Handle<Value> compile_string(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, src);
+        ARG_STR(0, src);
         return scope.Close(Integer::New(tcc_compile_string(STATE, *src)));
     }
     static Handle<Value> define_symbol(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, sym);
-        REQ_STR_ARG(1, val);
+        ARG_STR(0, sym);
+        ARG_STR(1, val);
         tcc_define_symbol(STATE, *sym, *val);
         return scope.Close(Undefined());
     }
     static Handle<Value> output_file(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, filename);
+        ARG_STR(0, filename);
         return scope.Close(Integer::New(tcc_output_file(STATE, *filename)));
     }
     static Handle<Value> run(const Arguments& args) {
@@ -172,24 +141,24 @@ public:
     }
     static Handle<Value> set_output_type(const Arguments& args) {
         HandleScope scope;
-        REQ_INT_ARG(0, type);
+        ARG_INT(0, type);
         return scope.Close(Integer::New(tcc_set_output_type(STATE, type)));
     }
     static Handle<Value> set_warning(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, name);
-        REQ_INT_ARG(1, val);
+        ARG_STR(0, name);
+        ARG_INT(1, val);
         return scope.Close(Integer::New(tcc_set_warning(STATE, *name, val)));
     }
     static Handle<Value> undefine_symbol(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, sym);
+        ARG_STR(0, sym);
         tcc_undefine_symbol(STATE, *sym);
         return scope.Close(Undefined());
     }
     static Handle<Value> get_symbol(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, sym);
+        ARG_STR(0, sym);
         void * ptr = tcc_get_symbol(STATE, *sym);
         return scope.Close(WrapPointer(ptr));
     }
@@ -199,8 +168,8 @@ public:
     }
     static Handle<Value> add_symbol(const Arguments& args) {
         HandleScope scope;
-        REQ_STR_ARG(0, name);
-        REQ_BUF_ARG(1, ptr);
+        ARG_STR(0, name);
+        ARG_BUF(1, ptr);
         return scope.Close(Integer::New(tcc_add_symbol(STATE, *name, ptr)));
     }
 };
